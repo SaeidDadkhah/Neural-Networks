@@ -1,8 +1,11 @@
 [X, y] = moon_dataset(10, 6, 2, 1000);
 
+X = [ones(2000, 1), X];
 w = rand(3, 1) - 0.5;
-for i = 1:100
-    w = adaline_learning(X, y, w);
-end
+w = train_by_epoch(@adaline_learning, 100, X, y, w);
 
-y_hat = sign([ones(2000, 1), X] * w);
+y_hat = sign(X * w);
+
+moon_visualization(X, y)
+hold on
+plot(x1, line_weights(w, x1))
