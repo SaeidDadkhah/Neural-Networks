@@ -17,7 +17,7 @@ while(error_train(length(error_train)) > error)
     error_train = [error_train, ...
         sum((sign(X * w) - y) .^ 2) / size(X, 1)];
     error_test = [error_test, ...
-        sum((sign(X_test * w) - y_test) .^ 2) / size(X, 1)];
+        sum((sign(X_test * w) - y_test) .^ 2) / size(X_test, 1)];
     
     epoch = epoch + 1;
 end

@@ -16,5 +16,5 @@ for i = 1:epoch
     error_train(i) = ...
         sum((sign(X * w) - y) .^ 2) / size(X, 1);
     error_test(i) = ...
-        sum((sign(X_test * w) - y_test) .^ 2) / size(X, 1);
+        sum((sign(X_test * w) - y_test) .^ 2) / size(X_test, 1);
 end
