@@ -22,7 +22,7 @@ function varargout = NN1(varargin)
 
 % Edit the above text to modify the response to help NN1
 
-% Last Modified by GUIDE v2.5 06-Mar-2017 19:03:25
+% Last Modified by GUIDE v2.5 07-Mar-2017 17:58:00
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -51,8 +51,15 @@ function NN1_OpeningFcn(hObject, eventdata, handles, varargin)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to NN1 (see VARARGIN)
-handles.dataset2.d = -1;
-handles.learning.method = 'Epoch';
+handles.dataset1.r = 10;
+handles.dataset1.w = 6;
+handles.dataset1.d = 1;
+handles.dataset1.number = 1000;
+
+[handles.dataset2.X, handles.dataset2.y] = read_dataset_2('DataSet2.txt');
+
+
+handles.learning.method = 1;
 handles.learning.number = 50;
 
 % Choose default command line output for NN1
@@ -81,15 +88,21 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-[handles.dataset2.X, handles.dataset2.y] = ...
-    moon_dataset(10, 6, handles.dataset2.d, 1000);
-[handles.dataset2.test.X, handles.dataset2.test.y] = ...
-    moon_dataset(10, 6, handles.dataset2.d, 1000);
+[handles.dataset1.X, handles.dataset1.y] = ...
+    moon_dataset(handles.dataset1.r, ...
+    handles.dataset1.w, ...
+    handles.dataset1.d, ...
+    handles.dataset1.number);
+[handles.dataset1.test.X, handles.dataset1.test.y] = ...
+    moon_dataset(handles.dataset1.r, ...
+    handles.dataset1.w, ...
+    handles.dataset1.d, ...
+    handles.dataset1.number);
 hold off
-moon_visualization(handles.dataset2.X, handles.dataset2.y)
+moon_visualization(handles.dataset1.X, handles.dataset1.y)
 
-handles.dataset2.X = [ones(2000, 1), handles.dataset2.X];
-handles.dataset2.test.X = [ones(2000, 1), handles.dataset2.test.X];
+%handles.dataset1.X = [ones(2000, 1), handles.dataset1.X];
+%handles.dataset1.test.X = [ones(2000, 1), handles.dataset1.test.X];
 
 guidata(hObject, handles);
 
@@ -105,7 +118,7 @@ function popupmenu1_Callback(hObject, eventdata, handles)
 values = get(hObject, 'string');
 index = get(hObject, 'value');
 value = values(index);
-handles.dataset2.d = str2double(value);
+handles.dataset1.d = str2double(value);
 guidata(hObject, handles);
 
 
@@ -150,11 +163,7 @@ function popupmenu2_Callback(hObject, eventdata, handles)
 % hObject    handle to popupmenu2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-values = get(hObject, 'String');
-index = get(hObject, 'value');
-value = values(index);
-
-handles.learning.method = value;
+handles.learning.method = get(hObject, 'value');
 guidata(hObject, handles);
 
 % Hints: contents = cellstr(get(hObject,'String')) returns popupmenu2 contents as cell array
@@ -181,6 +190,7 @@ function edit3_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 value = get(hObject, 'String');
 handles.learning.number = str2double(value);
+guidata(hObject, handles)
 % Hints: get(hObject,'String') returns contents of edit3 as text
 %        str2double(get(hObject,'String')) returns contents of edit3 as a double
 
@@ -204,18 +214,29 @@ function pushbutton2_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 switch handles.learning.method
-    case 'Epoch'
+    case 1
         [handles.first.weights, ...
             handles.first.error_train, ...
             handles.first.error_test] = train_by_epoch(...
             @perceptron_learning, ...
             handles.learning.number, ...
-            handles.dataset2.X, ...
-            handles.dataset2.y, ...
-            handles.dataset2.test.X, ...
-            handles.dataset2.test.y, ...
+            handles.dataset1.X, ...
+            handles.dataset1.y, ...
+            handles.dataset1.test.X, ...
+            handles.dataset1.test.y, ...
             rand(3, 1) - 0.5);
-    case 'Error'
+    case 2
+        [handles.first.weights, ...
+            handles.first.error_train, ...
+            handles.first.error_test, ...
+            epoch] = train_by_error(...
+            @perceptron_learning, ...
+            handles.learning.number, ...
+            handles.dataset1.X, ...
+            handles.dataset1.y, ...
+            handles.dataset1.test.X, ...
+            handles.dataset1.test.y, ...
+            rand(3, 1) - 0.5);
 end
 
 x = xlim;
@@ -235,3 +256,228 @@ hold on
 plot(1:(length(handles.first.error_test)), handles.first.error_test, '-o')
 hold off
 legend('Train Error', 'Test Error')
+
+
+% --- Executes on button press in pushbutton4.
+function pushbutton4_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton4 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+handles.second.weights = zeros(3, 12);
+handles.second.weights(:, 1) = rand(3, 1) - 0.5;
+
+switch handles.learning.method
+    case 1
+        handles.second.fig_step = ceil(handles.learning.number / 12);
+    case 2
+        [w, err1, err2, epoch] = train_by_error(...
+            @perceptron_learning, ...
+            handles.learning.number, ...
+            handles.dataset1.X, ...
+            handles.dataset1.y, ...
+            handles.dataset1.test.X, ...
+            handles.dataset1.test.y, ...
+            handles.second.weights(:, 1));
+        handles.second.fig_step = ceil(epoch / 12);
+end
+
+for i = 1:12
+    [handles.second.weights(:, i+1), e1, e2] = train_by_epoch(...
+        @perceptron_learning, ...
+        handles.second.fig_step, ...
+        handles.dataset1.X, ...
+        handles.dataset1.y, ...
+        handles.dataset1.test.X, ...
+        handles.dataset1.test.y, ...
+        handles.second.weights(:, i));
+end
+
+x = xlim;
+y = line_weights(handles.second.weights(:, 13), x);
+plot(x, y);
+
+guidata(hObject, handles)
+
+
+% --- Executes on button press in pushbutton5.
+function pushbutton5_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton5 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+figure(1)
+for i = 1:12
+    subplot(3, 4, i)
+    moon_visualization(handles.dataset1.X, handles.dataset1.y)
+    x = xlim;
+    xlim([-20 30]) % TODO
+    y = line_weights(handles.second.weights(:, i + 1), x);
+    plot(x, y);
+    title(sprintf('Epoch: %d', i*handles.second.fig_step))
+end
+
+
+% --- Executes on selection change in popupmenu3.
+function popupmenu3_Callback(hObject, eventdata, handles)
+% hObject    handle to popupmenu3 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu3 contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupmenu3
+
+
+% --- Executes during object creation, after setting all properties.
+function popupmenu3_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popupmenu3 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in pushbutton8.
+function pushbutton8_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton8 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[file,path] = uiputfile('*.txt','Save Weights of Second Question as');
+w = handles.second.weights;
+save(sprintf('%s%s', path, file), 'w', '-ascii')
+
+% --- Executes on button press in pushbutton9.
+function pushbutton9_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton9 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[file,path] = uigetfile('*.txt','Load Weights of Second Question as');
+sprintf('%s%s', path, file)
+handles.second.weights = load(sprintf('%s%s', path, file), '-ascii');
+
+x = xlim;
+y = line_weights(handles.second.weights(:, 13), x);
+plot(x, y);
+
+
+% --- Executes on button press in pushbutton6.
+function pushbutton6_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton6 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[file,path] = uiputfile('*.txt','Save Weights of First Question as');
+w = handles.first.weights;
+save(sprintf('%s%s', path, file), 'w', '-ascii')
+
+
+% --- Executes on button press in pushbutton7.
+function pushbutton7_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton7 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[file,path] = uigetfile('*.txt','Load Weights of First Question as');
+sprintf('%s%s', path, file)
+handles.first.weights = load(sprintf('%s%s', path, file), '-ascii')
+
+x = xlim;
+y = line_weights(handles.first.weights, x);
+plot(x, y);
+
+
+
+function edit4_Callback(hObject, eventdata, handles)
+% hObject    handle to edit4 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit4 as text
+%        str2double(get(hObject,'String')) returns contents of edit4 as a double
+handles.dataset1.r = str2double(get(hObject,'String'));
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function edit4_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit4 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit5_Callback(hObject, eventdata, handles)
+% hObject    handle to edit5 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit5 as text
+%        str2double(get(hObject,'String')) returns contents of edit5 as a double
+handles.dataset1.w = str2double(get(hObject,'String'));
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function edit5_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit5 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit6_Callback(hObject, eventdata, handles)
+% hObject    handle to edit6 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit6 as text
+%        str2double(get(hObject,'String')) returns contents of edit6 as a double
+handles.dataset1.d = str2double(get(hObject,'String'));
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function edit6_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit6 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit7_Callback(hObject, eventdata, handles)
+% hObject    handle to edit7 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit7 as text
+%        str2double(get(hObject,'String')) returns contents of edit7 as a double
+handles.dataset1.number = str2double(get(hObject,'String'));
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function edit7_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit7 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
