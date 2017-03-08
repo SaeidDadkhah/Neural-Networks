@@ -7,8 +7,8 @@ function [w, error_train, error_test] = train_by_epoch(...
     y_test, ...
     w)
 
-error_train = zeros(epoch, 1);
-error_test = zeros(epoch, 1);
+error_train = zeros(1, epoch);
+error_test = zeros(1, epoch);
 
 for i = 1:epoch
     w = learning(X, y, w);
@@ -18,3 +18,4 @@ for i = 1:epoch
     error_test(i) = ...
         sum((sign(X_test * w) - y_test) .^ 2) / size(X_test, 1);
 end
+X = 1;
