@@ -1,10 +1,16 @@
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import numpy as np
 from math import pi
 
+defaults = {'r': 10,
+            'w': 6,
+            'd': 1,
+            'number': 1000}
+
 
 # noinspection PyShadowingNames
-def generate(r=10, w=6, d=1, number=1000):
+def generate(r=defaults['r'], w=defaults['w'], d=defaults['d'], number=defaults['number']):
     theta = pi * np.matrix(np.random.random((number, 1)))
     a = r + w * (np.matrix(np.random.random((number, 1))) - 0.5)
     x = np.concatenate((np.multiply(a, np.cos(theta)), np.multiply(a, np.sin(theta))), axis=1)
@@ -20,19 +26,21 @@ def generate(r=10, w=6, d=1, number=1000):
 
 
 # noinspection PyShadowingNames
-def visualize(x, y, show=True):
-    plt.plot(x[(y == -1).squeeze(), 1], x[(y == -1).squeeze(), 2], 'r.')
-    plt.plot(x[(y != -1).squeeze(), 1], x[(y != -1).squeeze(), 2], 'b.')
-    if show:
-        plt.show()
+def visualize(x, y):
+    figure = plt.figure()
+    a = figure.add_subplot(111)
+    a.plot(x[(y == -1).squeeze(), 1], x[(y == -1).squeeze(), 2], 'r.')
+    a.plot(x[(y != -1).squeeze(), 1], x[(y != -1).squeeze(), 2], 'b.')
+    return figure
 
 
 # noinspection PyShadowingNames
-def boundary(x, w):
+def boundary(figure, x, w):
     y = -(w[1] * x + w[0]) / w[2]
-    plt.plot(x, y)
+    figure.plot(x, y)
+
 
 if __name__ == "__main__":
     x, y = generate()
-    visualize(x, y)
-
+    figure = visualize(x, y)
+    plt.show(figure)
